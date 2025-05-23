@@ -13,6 +13,9 @@ const socket = io.connect(SOCKET_URL);
 
 const updateRate = 30; // frames
 
+// for the accelerometer & gyroscope
+let permissionGranted = false;
+
 // nickname to make you easier to identify on screen
 const handles = [
   "silver",
@@ -48,6 +51,44 @@ function setup() {
   textAlign(CENTER, CENTER);
   fill(255);
   nickname = random(handles);
+
+  // permission code from: https://editor.p5js.org/remarkability/sketches/1D90zhu4a
+  // DeviceOrientationEvent, DeviceMotionEvent
+  if (typeof(DeviceOrientationEvent) !== 'undefined' && typeof(DeviceOrientationEvent.requestPermission) === 'function') {
+    // ios device probably
+    DeviceOrientationEvent.requestPermission()
+      .catch(() => {
+        // show permission dialog only the first time
+        let button = createButton("click to allow access to sensors");
+        button.style("font-size", "24px");
+        button.center();
+        button.mousePressed( requestAccess );
+        throw error;
+      })
+      .then(() => {
+        // on any subsequent visits
+        permissionGranted = true;
+      })
+  } else {
+    // non ios 13 device
+    textSize(48);
+    // text("non ios 13 device", 100, 100);
+    permissionGranted = true;
+  }
+}
+
+function requestAccess() {
+  DeviceOrientationEvent.requestPermission()
+    .then(response => {
+      if (response == 'granted') {
+        permissionGranted = true;
+      } else {
+        permissionGranted = false;
+      }
+    })
+  .catch(console.error);
+  
+  this.remove();
 }
 
 function draw() {
